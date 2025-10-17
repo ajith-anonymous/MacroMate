@@ -1,6 +1,6 @@
 🥦 MacroMate
 
-A simple and clean web app to track daily nutrition — calories, protein, carbs, and fats.
+A simple, responsive , dynamic and clean web app to track daily nutrition — calories, protein, carbs, and fats.
 Perfect for fitness lovers and gym enthusiasts.
 
 ✨ Features
