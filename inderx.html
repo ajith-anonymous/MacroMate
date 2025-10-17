@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title> MacroMate — Calorie & Macro Tracker</title>
+  <style>
+    /* Tailored minimal aesthetic UI/UX + animations */
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa7b2; --accent:#22c55e; --accent-2:#06b6d4; --glass: rgba(255,255,255,0.04);
+      --glass-2: rgba(255,255,255,0.02);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071120 0%, #07162a 100%);color:#e6eef6}
+    .app{max-width:1100px;margin:32px auto;padding:28px;border-radius:18px;backdrop-filter: blur(6px);background:linear-gradient(180deg,var(--glass), var(--glass-2));box-shadow:0 8px 30px rgba(2,6,23,0.7)}
+
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    .brand{display:flex;gap:14px;align-items:center}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;font-weight:700;box-shadow:0 6px 20px rgba(2,6,23,0.6)}
+    .brand h1{margin:0;font-size:20px}
+    .brand p{margin:0;color:var(--muted);font-size:13px}
+
+    .top-controls{display:flex;gap:10px;align-items:center}
+    .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:10px;color:inherit;cursor:pointer;transition:transform .18s ease, box-shadow .18s}
+    .btn:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(2,6,23,0.6)}
+    .btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#04121a;border:0}
+
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+
+    /* Left column */
+    .card{background:linear-gradient(180deg,#071224 0%, #071426 100%);padding:16px;border-radius:14px;border:1px solid rgba(255,255,255,0.03)}
+    .profile{display:flex;gap:12px;align-items:center}
+    .avatar{width:72px;height:72px;border-radius:12px;background:linear-gradient(180deg,#0b1b2b,#072233);display:grid;place-items:center;font-weight:700}
+    .small{font-size:12px;color:var(--muted);}
+
+    .stats{display:flex;gap:12px;margin-top:16px}
+    .stat{flex:1;padding:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:10px;text-align:center}
+    .stat h3{margin:4px 0}
+
+    .progress-ring{width:120px;height:120px;margin:8px auto;display:block}
+
+    /* right column */
+    .controls{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+    .search{flex:1;display:flex;gap:8px}
+    .input{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+
+    .food-list{margin-top:12px}
+    .food-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;margin-bottom:8px;background:linear-gradient(180deg, rgba(255,255,255,0.015), transparent);border:1px solid rgba(255,255,255,0.02);transition:transform .12s}
+    .food-item:hover{transform:translateX(6px)}
+    .meta{display:flex;gap:12px;align-items:center}
+    .macro{font-size:13px;color:var(--muted)}
+
+    .summary{display:flex;gap:12px;align-items:center;margin-top:14px}
+    .chip{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.03);font-size:13px}
+
+    .today{display:flex;gap:12px;align-items:center}
+
+    footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
+
+    /* modal */
+    .modal-back{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .18s}
+    .modal{width:480px;background:linear-gradient(180deg,#071224,#06162a);padding:18px;border-radius:14px;border:1px solid rgba(255,255,255,0.03)}
+    .modal.show{transform:translateY(0)}
+    .modal-back.show{opacity:1;pointer-events:auto}
+
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    .row{display:flex;gap:8px}
+    .small-input{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;   color: #ffffff; }
+
+    /* subtle animation */
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+    .brand .logo{animation:pulse 4s ease-in-out infinite}
+
+    /* responsive */
+    @media (max-width:900px){.grid{grid-template-columns:1fr;}.app{margin:16px}}
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="brand">
+        <div class="logo">FT</div>
+        <div>
+          <h1>MacroMate</h1>
+          <p class="small">Calorie & macro tracker — built for gym people</p>
+        </div>
+      </div>
+      <div class="top-controls">
+        <div class="small">Target: <strong id="targetCals">2500</strong> kcal</div>
+        <button class="btn" id="btn-reset">Reset day</button>
+        <button class="btn btn-primary" id="btn-add">Add food</button>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section>
+        <div class="card">
+          <div class="profile">
+            <div class="avatar">U</div>
+            <div>
+              <div style="display:flex;gap:8px;align-items:center"><h3 style="margin:0">User</h3><div class="small">Gym • Bulk</div></div>
+              <div class="small">Daily target based on your goals</div>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="small">Calories</div>
+              <h3 id="calorieCount">0 kcal</h3>
+            </div>
+            <div class="stat">
+              <div class="small">Protein</div>
+              <h3 id="proteinCount">0 g</h3>
+            </div>
+            <div class="stat">
+              <div class="small">Carbs</div>
+              <h3 id="carbCount">0 g</h3>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;text-align:center">
+            <svg class="progress-ring" viewBox="0 0 120 120" width="120" height="120">
+              <defs></defs>
+              <circle cx="60" cy="60" r="50" stroke="rgba(255,255,255,0.06)" stroke-width="12" fill="none"></circle>
+              <circle id="ring" cx="60" cy="60" r="50" stroke="url(#grad)" stroke-width="12" fill="none" stroke-linecap="round" transform="rotate(-90 60 60)"></circle>
+              Sorry, your browser doesn't support inline SVG.
+            </svg>
+            <div class="small">Daily progress</div>
+          </div>
+
+          <div class="summary">
+            <div class="chip">Remaining: <strong id="remainingCals">2500</strong> kcal</div>
+            <div class="chip">Protein goal: <strong id="proteinGoal">150</strong> g</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h4 style="margin:0 0 8px 0">Quick add</h4>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" data-food='{"name":"Egg (2)","cal":156,"protein":12,"carbs":1.1}'>Eggs (2)</button>
+            <button class="btn" data-food='{"name":"Chicken 100g","cal":165,"protein":31,"carbs":0}'>Chicken 100g</button>
+            <button class="btn" data-food='{"name":"Rice 1 cup","cal":205,"protein":4.3,"carbs":45}'>Rice 1 cup</button>
+            <button class="btn" data-food='{"name":"Banana","cal":105,"protein":1.3,"carbs":27}'>Banana</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="card">
+          <div class="controls">
+            <div class="search">
+              <input id="q" class="input" placeholder="Search food or add custom" />
+              <button class="btn" id="btn-search">Search</button>
+            </div>
+            <select id="viewSel" class="input" style="max-width:160px">
+              <option>Today</option>
+              <option>Last 7 days</option>
+            </select>
+          </div>
+
+          <div class="today small">Today: <strong id="todayDate"></strong></div>
+
+          <div class="food-list" id="foodList">
+            <!-- items will appear here -->
+          </div>
+
+          <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+            <div class="small">Totals</div>
+            <div style="display:flex;gap:12px">
+              <div class="chip">Calories: <strong id="totalCal">0</strong></div>
+              <div class="chip">Protein: <strong id="totalProtein">0</strong> g</div>
+              <div class="chip">Carbs: <strong id="totalCarb">0</strong> g</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h4 style="margin:0 0 8px 0">Nutrition breakdown</h4>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <div style="flex:1;min-width:220px">
+              <div style="font-size:13px;color:var(--muted);">Macros</div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <div style="flex:1">
+                  <div class="small">Protein</div>
+                  <progress id="pProtein" value="0" max="150" style="width:100%"></progress>
+                </div>
+                <div style="flex:1">
+                  <div class="small">Carbs</div>
+                  <progress id="pCarb" value="0" max="300" style="width:100%"></progress>
+                </div>
+                <div style="flex:1">
+                  <div class="small">Fats</div>
+                  <progress id="pFat" value="0" max="90" style="width:100%"></progress>
+                </div>
+              </div>
+            </div>
+
+            <div style="width:180px;text-align:center">
+              <div class="small">Daily calorie usage</div>
+              <div style="font-size:20px;font-weight:700;margin-top:6px" id="percent">0%</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>Made with ❤️ — Save data in localStorage. Export/Import available.</footer>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-back" id="modalBack">
+    <div class="modal" id="modal">
+      <h3 style="margin-top:0">Add food</h3>
+      <label>Name</label>
+      <input id="fName" class="small-input" placeholder="e.g. Chicken breast 150g" />
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <div style="flex:1">
+          <label>Calories (kcal)</label>
+          <input id="fCal" class="small-input" type="number" />
+        </div>
+        <div style="flex:1">
+          <label>Protein (g)</label>
+          <input id="fProtein" class="small-input" type="number" />
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <div style="flex:1">
+          <label>Carbs (g)</label>
+          <input id="fCarb" class="small-input" type="number" />
+        </div>
+        <div style="flex:1">
+          <label>Fats (g)</label>
+          <input id="fFat" class="small-input" type="number" />
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+        <button class="btn" id="btn-cancel">Cancel</button>
+        <button class="btn btn-primary" id="btn-save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple SPA-like behaviour — keep everything client-side using localStorage
+    const state = {list: [], targetCals: 2500, proteinGoal: 150}
+
+    // init
+    function $(id){return document.getElementById(id)}
+    const modalBack = $('modalBack'), modal = $('modal')
+    function showModal(){modalBack.classList.add('show')}
+    function hideModal(){modalBack.classList.remove('show')}
+
+    function saveState(){localStorage.setItem('fittrack', JSON.stringify(state))}
+    function loadState(){const s=localStorage.getItem('fittrack'); if(s) Object.assign(state, JSON.parse(s))}
+
+    function formatDate(d){return d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}
+
+    function render(){
+      $('todayDate').textContent = formatDate(new Date())
+      $('targetCals').textContent = state.targetCals
+      $('proteinGoal').textContent = state.proteinGoal
+
+      // totals
+      const totals = state.list.reduce((acc,i)=>{acc.cal+=i.cal;acc.pro+=i.pro;acc.car+=i.car;acc.fat+=i.fat;return acc},{cal:0,pro:0,car:0,fat:0})
+      $('totalCal').textContent = Math.round(totals.cal)
+      $('totalProtein').textContent = Math.round(totals.pro)
+      $('totalCarb').textContent = Math.round(totals.car)
+
+      $('calorieCount').textContent = Math.round(totals.cal) + ' kcal'
+      $('proteinCount').textContent = Math.round(totals.pro) + ' g'
+      $('carbCount').textContent = Math.round(totals.car) + ' g'
+
+      const remaining = state.targetCals - totals.cal
+      $('remainingCals').textContent = Math.round(remaining)
+
+      // progress ring
+      const ring = $('ring')
+      const circumference = 2 * Math.PI * 50
+      const percent = Math.min(100, Math.max(0, Math.round((totals.cal/state.targetCals)*100)))
+      ring.style.strokeDasharray = circumference
+      ring.style.strokeDashoffset = circumference * (1 - percent/100)
+      // gradient for ring
+      const grad = document.createElementNS('http://www.w3.org/2000/svg','linearGradient'); grad.setAttribute('id','grad'); grad.setAttribute('x1','0%'); grad.setAttribute('y1','0%'); grad.setAttribute('x2','100%'); grad.setAttribute('y2','0%')
+      grad.innerHTML = '<stop offset="0%" stop-color="#22c55e"/><stop offset="100%" stop-color="#06b6d4"/>'
+      const svg = ring.ownerSVGElement
+      const old = svg.querySelector('defs')
+      if(old) svg.removeChild(old)
+      const defs = document.createElementNS('http://www.w3.org/2000/svg','defs'); defs.appendChild(grad); svg.insertBefore(defs, svg.firstChild)
+
+      $('percent').textContent = percent + '%'
+
+      $('pProtein').value = Math.min(state.proteinGoal, totals.pro)
+      $('pProtein').max = state.proteinGoal
+      $('pCarb').value = Math.min(300, totals.car)
+      $('pFat').value = Math.min(90, totals.fat)
+
+      // list
+      const listEl = $('foodList'); listEl.innerHTML = ''
+      state.list.forEach((item,idx)=>{
+        const el = document.createElement('div'); el.className='food-item'
+        el.innerHTML = `<div class='meta'><div><strong>${item.name}</strong><div class='macro small'>${item.cal} kcal • ${item.pro} g P • ${item.car} g C</div></div></div><div style='display:flex;gap:12px;align-items:center'><div class='small'>${item.time}</div><button class='btn' data-idx='${idx}'>Delete</button></div>`
+        listEl.appendChild(el)
+      })
+
+      // attach delete handlers
+      listEl.querySelectorAll('button.btn').forEach(b=>b.addEventListener('click',(e)=>{const i=+e.target.dataset.idx;state.list.splice(i,1);saveState();render()}))
+
+      saveState()
+    }
+
+    // handlers
+    $('btn-add').addEventListener('click',()=>{ $('fName').value='';$('fCal').value='';$('fProtein').value='';$('fCarb').value='';$('fFat').value=''; showModal() })
+    $('btn-cancel').addEventListener('click',hideModal)
+    modalBack.addEventListener('click', (e)=>{ if(e.target===modalBack) hideModal() })
+
+    $('btn-save').addEventListener('click', ()=>{
+      const name = $('fName').value || 'Custom food'
+      const cal = Number($('fCal').value)||0
+      const pro = Number($('fProtein').value)||0
+      const car = Number($('fCarb').value)||0
+      const fat = Number($('fFat').value)||0
+      state.list.push({name,cal,pro,car,fat,time:new Date().toLocaleTimeString()})
+      hideModal(); render()
+    })
+
+    document.querySelectorAll('[data-food]').forEach(b=>b.addEventListener('click', (e)=>{
+      const f = JSON.parse(e.currentTarget.dataset.food)
+      state.list.push({name:f.name,cal:f.cal,pro:f.protein,car:f.car,fat:0,time:new Date().toLocaleTimeString()}); render()
+    }))
+
+    $('btn-reset').addEventListener('click', ()=>{ if(confirm('Reset today data?')){state.list=[];saveState();render()} })
+
+    $('btn-search').addEventListener('click', ()=>{
+      const q = $('q').value.trim()
+      if(!q) return alert('Type food name or use quick-add')
+      // local fuzzy search (demo) — in real app call nutrition API
+      const found = [{name:q,cal:200,protein:12,carbs:18}]
+      const f = found[0]
+      state.list.push({name:f.name,cal:f.cal,pro:f.protein,car:f.car,fat:0,time:new Date().toLocaleTimeString()})
+      $('q').value=''
+      render()
+    })
+
+    // quick export/import
+    function exportJson(){ const data = {state, exportedAt:new Date()}; const blob = new Blob([JSON.stringify(data, null,2)],{type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='fittrack-export.json'; a.click(); URL.revokeObjectURL(url) }
+    function importJson(file){ const reader = new FileReader(); reader.onload = e=>{ try{ const d=JSON.parse(e.target.result); if(d.state){ Object.assign(state, d.state); saveState(); render(); alert('Imported') } }catch(e){alert('Invalid file')} }; reader.readAsText(file)
+    }
+
+    // wire keyboard shortcuts
+    document.addEventListener('keydown', (e)=>{ if(e.key==='n'){ showModal() } if(e.key==='e' && (e.ctrlKey||e.metaKey)){ e.preventDefault(); exportJson() } })
+
+    // load on start
+    loadState(); render();
+
+    // expose export/import buttons via context menu (quick)
+    window.exportJson = exportJson; window.importJson = importJson
+  </script>
+
+</body>
+</html>
