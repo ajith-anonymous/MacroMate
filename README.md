@@ -27,4 +27,4 @@ Start adding your meals!
 Image recognition for auto-calories
 Mobile responsive UI
 API integration for nutrition data
-Preview - http://127.0.0.1:5500/inderx.html
+Preview -  https://ajith-anonymous.github.io/MacroMate/
