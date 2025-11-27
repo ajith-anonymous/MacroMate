@@ -27,4 +27,5 @@ Start adding your meals!
 Image recognition for auto-calories
 Mobile responsive UI
 API integration for nutrition data
+
 Preview -  https://ajith-anonymous.github.io/MacroMate/
