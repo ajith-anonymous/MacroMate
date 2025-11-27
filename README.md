@@ -3,6 +3,8 @@
 A simple, responsive , dynamic and clean web app to track daily nutrition — calories, protein, carbs, and fats.
 Perfect for fitness lovers and gym enthusiasts.
 
+Preview -  https://ajith-anonymous.github.io/MacroMate/
+
 ✨ Features
 
 Track daily nutrition
@@ -28,4 +30,4 @@ Image recognition for auto-calories
 Mobile responsive UI
 API integration for nutrition data
 
-Preview -  https://ajith-anonymous.github.io/MacroMate/
+
